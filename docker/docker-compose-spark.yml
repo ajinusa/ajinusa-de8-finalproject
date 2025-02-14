@@ -1,8 +1,8 @@
 services:
-    dibimbing-dataeng-spark-master:
+    ajinusa-de8-spark-master:
         container_name: ${SPARK_MASTER_CONTAINER_NAME}
         hostname: ${SPARK_MASTER_HOST_NAME}
-        image: dataeng-dibimbing/spark
+        image: ajinusa-de8-dibimbing/spark
         environment:
             - SPARK_MODE=master
             - SPARK_RPC_AUTHENTICATION_ENABLED=no
@@ -17,9 +17,9 @@ services:
             - ${SPARK_MASTER_UI}:8080
             - ${SPARK_MASTER_PORT}:7077
 
-    dibimbing-dataeng-spark-worker-1: &worker_default
+    ajinusa-de8-spark-worker-1: &worker_default
         container_name: ${SPARK_WORKER_CONTAINER_NAME}-1
-        image: dataeng-dibimbing/spark
+        image: ajinusa-de8-dibimbing/spark
         environment:
             - SPARK_MODE=worker
             - SPARK_MASTER_URL=spark://${SPARK_MASTER_HOST_NAME}:${SPARK_MASTER_PORT}
@@ -34,13 +34,13 @@ services:
             - ../scripts:/scripts
             - ../logs:/tmp
         depends_on:
-            - dibimbing-dataeng-spark-master
+            - dibimbing-ajinusa-de8-spark-master
 
-    # dibimbing-dataeng-spark-worker-2:
+    # dibimbing-ajinusa-de8-spark-worker-2:
     #   <<: *worker_default
     #   container_name: ${SPARK_WORKER_CONTAINER_NAME}-2
 
 networks:
     default:
-        name: dataeng-network
+        name: ajinusa-de8-network
         external: true

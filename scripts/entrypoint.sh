@@ -8,7 +8,7 @@ airflow connections add 'postgres_main' \
 --conn-host $POSTGRES_CONTAINER_NAME \
 --conn-port $POSTGRES_PORT \
 --conn-schema $POSTGRES_DB
-airflow connections add 'postgres_dw' \
+airflow connections add 'de8_final_project' \
 --conn-type 'postgres' \
 --conn-login $POSTGRES_USER \
 --conn-password $POSTGRES_PASSWORD \

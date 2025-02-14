@@ -34,5 +34,5 @@ services:
 
 networks:
     default:
-        name: dataeng-network
+        name: ajinusa-de8-network
         external: true

@@ -1,6 +1,6 @@
 services:
     scheduler:
-        image: dataeng-dibimbing/airflow
+        image: ajinusa-de8-dibimbing/airflow
         container_name: ${AIRFLOW_SCHEDULER_CONTAINER_NAME}
         hostname: ${AIRFLOW_SCHEDULER_CONTAINER_NAME}
         command: scheduler
@@ -23,7 +23,7 @@ services:
             - ../scripts:/scripts
 
     webserver:
-        image: dataeng-dibimbing/airflow
+        image: ajinusa-de8-dibimbing/airflow
         container_name: ${AIRFLOW_WEBSERVER_CONTAINER_NAME}
         hostname: ${AIRFLOW_WEBSERVER_CONTAINER_NAME}
         entrypoint: /scripts/entrypoint.sh
@@ -51,5 +51,5 @@ services:
 
 networks:
     default:
-        name: dataeng-network
+        name: ajinusa-de8-network
         external: true

@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:latest
+    container_name: ajinusa-mysql-container
+    environment:
+      MYSQL_ROOT_PASSWORD: ajinusa
+      MYSQL_DATABASE: de8_final_project
+    ports:
+      - "3306:3306"
+    networks:
+      - mysql_network
+    restart: always
+    volumes:
+      - mysql-data:/var/lib/mysql   # Untuk menyimpan data MySQL di volume
+      - ./my.cnf:/etc/mysql/my.cnf  # Menambahkan file konfigurasi custom
+volumes:
+  mysql-data:
+
+networks:
+  mysql_network:
+    driver: bridge

@@ -15,11 +15,11 @@ help:
 docker-build-slim:
 	@chmod 777 logs/
 	@chmod 777 notebooks/
-	@docker network inspect dataeng-network >/dev/null 2>&1 || docker network create dataeng-network
-	@docker build -t dataeng-dibimbing/jupyter -f ./docker/Dockerfile.jupyter .
+	@docker network inspect ajinusa-de8-network >/dev/null 2>&1 || docker network create ajinusa-de8-network
+	@docker build -t ajinusa-de8-dibimbing/jupyter -f ./docker/Dockerfile.jupyter .
 
 docker-build-slim-windows:
-	@docker build -t dataeng-dibimbing/jupyter -f ./docker/Dockerfile.jupyter .
+	@docker build -t ajinusa-de8-dibimbing/jupyter -f ./docker/Dockerfile.jupyter .
 
 docker-build:
 	@echo '__________________________________________________________'
@@ -27,24 +27,24 @@ docker-build:
 	@echo '__________________________________________________________'
 	@chmod 777 logs/
 	@chmod 777 notebooks/
-	@docker network inspect dataeng-network >/dev/null 2>&1 || docker network create dataeng-network
+	@docker network inspect ajinusa-de8-network >/dev/null 2>&1 || docker network create ajinusa-de8-network
 	@echo '__________________________________________________________'
-	@docker build -t dataeng-dibimbing/spark -f ./docker/Dockerfile.spark .
+	@docker build -t ajinusa-de8-dibimbing/spark -f ./docker/Dockerfile.spark .
 	@echo '__________________________________________________________'
-	@docker build -t dataeng-dibimbing/airflow -f ./docker/Dockerfile.airflow .
+	@docker build -t ajinusa-de8-dibimbing/airflow -f ./docker/Dockerfile.airflow .
 	@echo '__________________________________________________________'
-	@docker build -t dataeng-dibimbing/jupyter -f ./docker/Dockerfile.jupyter .
+	@docker build -t ajinusa-de8-dibimbing/jupyter -f ./docker/Dockerfile.jupyter .
 	@echo '==========================================================='
 
 docker-build-windows:
 	@echo '__________________________________________________________'
 	@echo 'Building Docker Images ...'
 	@echo '__________________________________________________________'
-	@docker build -t dataeng-dibimbing/spark -f ./docker/Dockerfile.spark .
+	@docker build -t ajinusa-de8-dibimbing/spark -f ./docker/Dockerfile.spark .
 	@echo '__________________________________________________________'
-	@docker build -t dataeng-dibimbing/airflow -f ./docker/Dockerfile.airflow .
+	@docker build -t ajinusa-de8-dibimbing/airflow -f ./docker/Dockerfile.airflow .
 	@echo '__________________________________________________________'
-	@docker build -t dataeng-dibimbing/jupyter -f ./docker/Dockerfile.jupyter .
+	@docker build -t ajinusa-de8-dibimbing/jupyter -f ./docker/Dockerfile.jupyter .
 	@echo '==========================================================='
 
 
@@ -52,13 +52,13 @@ docker-build-arm:
 	@echo '__________________________________________________________'
 	@echo 'Building Docker Images ...'
 	@echo '__________________________________________________________'
-	@docker network inspect dataeng-network >/dev/null 2>&1 || docker network create dataeng-network
+	@docker network inspect ajinusa-de8-network >/dev/null 2>&1 || docker network create ajinusa-de8-network
 	@echo '__________________________________________________________'
-	@docker build -t dataeng-dibimbing/spark -f ./docker/Dockerfile.spark .
+	@docker build -t ajinusa-de8-dibimbing/spark -f ./docker/Dockerfile.spark .
 	@echo '__________________________________________________________'
-	@docker build -t dataeng-dibimbing/airflow -f ./docker/Dockerfile.airflow-arm .
+	@docker build -t ajinusa-de8-dibimbing/airflow -f ./docker/Dockerfile.airflow-arm .
 	@echo '__________________________________________________________'
-	@docker build -t dataeng-dibimbing/jupyter -f ./docker/Dockerfile.jupyter .
+	@docker build -t ajinusa-de8-dibimbing/jupyter -f ./docker/Dockerfile.jupyter .
 	@echo '==========================================================='
 
 jupyter:
@@ -204,4 +204,7 @@ clean:
 
 
 postgres-bash:
-	@docker exec -it dataeng-postgres bash
+	@docker exec -it ajinusa-de8-postgres bash
+
+mysql:
+	@docker compose -f ./docker/docker-compose-mysql.yml up -d
