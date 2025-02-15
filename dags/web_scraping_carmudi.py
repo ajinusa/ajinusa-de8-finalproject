@@ -15,8 +15,8 @@ import csv
 @dag(
     params = {
         "url": Param("https://www.carmudi.co.id/mobil-dijual/indonesia?type=used&page_number=", description="masukkan url"), # definisikan parameternya
-        "last_page":Param(1, type="integer", description="Mau scraping sampai halaman berapa?"),
-        "filename": Param("carmudi_data2", description="masukkan nama file")
+        # "last_page":Param(1, type="integer", description="Mau scraping sampai halaman berapa?"),
+        "filename": Param("carmudi_data", description="masukkan nama file")
     }
 )
 
@@ -42,7 +42,7 @@ def web_scraping():
                 
         # for url in urls:
         for i in range(1, param3 + 1):
-            url = f"{param1}{i}"  # Format URL dengan nomor halaman
+            url = f"{param1}{i}"  
             # print(url)  # Cek apakah URL sudah benar
 
             # Request ke website
@@ -66,8 +66,15 @@ def web_scraping():
                     harga = item.find("div", class_="listing__price").text.strip()
                     snapshot_date = datetime.now(pytz.timezone("Asia/Jakarta")).strftime("%Y-%m-%d %H:%M:%S")
                     link = item.find("a")["href"]
+                    whatsapp_link = item.find('a', {'data-whatsapp-number': True})
+                    # Extract the phone number
+                    phone_number = whatsapp_link['data-whatsapp-number'] if whatsapp_link else None
+                    km = item.find('div', class_='item push-quarter--ends soft--right push-quarter--right').text.strip()
+                    transmission = item.find('div', class_='item push-quarter--ends').text.strip()
+                    location = item.find_all('div', class_='item push-quarter--ends')[1].text.strip()
+                    dealer = item.find('div', class_='item push-quarter--ends listing__spec--dealer').text.strip()
 
-                    # Cari bagian setelah tahun dan sebelum angka berikutnya atau kode trim
+
                     match = re.search(r'^\d+\s+(.+?)\s+\d', judul)
 
                     if match:
@@ -80,9 +87,13 @@ def web_scraping():
                         "tahun": tahun,
                         "merek": merek,
                         "nama_mobil": brand_model,
-                        "snapshot_dt": snapshot_date,
-                        # "Lokasi": specs["Kilometer"],
-                        "link": link
+                        "kilometer": km,
+                        "transmisi": transmission,
+                        "lokasi": location,
+                        "dealer": dealer,
+                        "phone_number":phone_number,
+                        "link": link,
+                        "snapshot_dt": snapshot_date
 
                     })
                 except:
@@ -93,14 +104,6 @@ def web_scraping():
         # print(df_data)
         return df_data
 
-        # output_dir = '/data/'
-        # os.makedirs(output_dir, exist_ok=True)
-
-        # # Save the CSV file
-        # output_path = os.path.join(output_dir, param2+'.csv')
-        # df.to_csv(output_path, index=False)
-
-        # print(f"Data saved to {output_path}")
 
     @task
     def extract_from_csv(param1):
@@ -114,38 +117,9 @@ def web_scraping():
 
     @task
     def load_database(df, table_name):
-    # ===================== load postgres ===================
-        # # Koneksi ke PostgreSQL (Ganti sesuai kredensial)
-        # DATABASE_URL = "postgresql://ajinusa:ajinusa@localhost:5433/de8_final_project"
-        # engine = sa.create_engine(DATABASE_URL)
-        # # engine = PostgresHook("de8_final_project").get_sqlalchemy_engine()
-        # # 4. Load DataFrame ke tabel PostgreSQL
-        # df.to_sql(table_name, con=engine, schema='de8_final_project', if_exists='append', index=False)
-
-        # print("Data berhasil dimasukkan ke PostgreSQL.")
-
-
-    # ===================== load SQLite =====================
-
-    #     print("cek")
-    #     print(df)
-
-    #     engine     = sa.create_engine(f"sqlite:///data/"+table_name+".sqlite")
-
-    # # Load DataFrame ke tabel SQLite, menggantikan tabel jika sudah ada
-    #     with engine.begin() as conn:
-    #         df.to_sql(table_name, conn, index=False, if_exists="replace")
-
-    #         # Mengambil data dengan query SQL
-    #         query = "SELECT * FROM "+table_name+" LIMIT 10"
-    #         df = pd.read_sql(sa.text(query), conn)
-
-    #         print("Menampilkan tabel sqlite : "+table_name)
-    #         print(df)
-
-
+        
         # ======== mysql =======
-        DATABASE_URL = "mysql://root:ajinusa@localhost:3306/de8_final_project"
+        # DATABASE_URL = "mysql://root:ajinusa@ajinusa-mysql-container:3306/de8_final_project"
         # engine = sa.create_engine(DATABASE_URL)
         engine = PostgresHook("ajinusa-mysql").get_sqlalchemy_engine()
         # Cek koneksi
@@ -167,7 +141,7 @@ def web_scraping():
     
     @task
     def read_mysql(table_name):
-        DATABASE_URL = "mysql+pymysql://root:ajinusa@localhost:3306/de8_final_project"
+        DATABASE_URL = "mysql+pymysql://root:ajinusa@ajinusa-mysql-container:3306/de8_final_project"
 
         # Membuat engine untuk koneksi
         # engine = create_engine(DATABASE_URL)
@@ -179,7 +153,7 @@ def web_scraping():
                 print("Koneksi ke MySQL berhasil!")
                 
                 # Misalnya kita ingin mengambil data dari tabel 'your_table_name'
-                query = "SELECT nama_mobil, AVG(CAST(harga AS DECIMAL(10, 2))) AS avg_harga FROM "+table_name+" group by 1 order by 2 desc"  # Ganti dengan nama tabel kamu
+                query = "SELECT nama_mobil, AVG(CAST(harga AS DECIMAL(10, 2))) AS avg_harga FROM "+table_name+" group by 1 order by 2 desc limit 10"  # Ganti dengan nama tabel kamu
                 
                 # Menjalankan query dan mengubahnya ke dalam DataFrame
                 df_read_mysql = pd.read_sql(query, connection)
@@ -191,7 +165,7 @@ def web_scraping():
             print("Error koneksi:", e)
 
 
-    extract_web = extract_web(param1 = "{{ params['url'] }}", param2 = "{{ params['filename'] }}", param3 = 1)
+    extract_web = extract_web(param1 = "{{ params['url'] }}", param2 = "{{ params['filename'] }}", param3 = 200)
     load_database = load_database(df = extract_web,table_name = "{{ params['filename'] }}")
     read_mysql = read_mysql(table_name = "{{ params['filename'] }}")
     start_task >> extract_web >> load_database >> read_mysql >> end_task

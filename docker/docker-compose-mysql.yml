@@ -10,14 +10,20 @@ services:
     ports:
       - "3306:3306"
     networks:
-      - mysql_network
+      - ajinusa-de8-network
     restart: always
     volumes:
       - mysql-data:/var/lib/mysql   # Untuk menyimpan data MySQL di volume
       - ./my.cnf:/etc/mysql/my.cnf  # Menambahkan file konfigurasi custom
+
 volumes:
   mysql-data:
 
+# networks:
+#   ajinusa-bridge-network:
+#     driver: bridge
+
 networks:
-  mysql_network:
-    driver: bridge
+    ajinusa-de8-network:
+        driver: bridge
+        external: true

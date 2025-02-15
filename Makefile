@@ -192,11 +192,11 @@ datahub-ingest:
 	@datahub ingest -c ./datahub/sample.yaml --dry-run
 	@echo '==========================================================='
 
-metabase: postgres-create-warehouse
+metabase: 
 	@echo '__________________________________________________________'
 	@echo 'Creating Metabase Instance ...'
 	@echo '__________________________________________________________'
-	@docker compose -f ./docker/docker-compose-metabase.yml --env-file .env up
+	@docker compose -f ./docker/docker-compose-metabase.yml up -d
 	@echo '==========================================================='
 
 clean:
