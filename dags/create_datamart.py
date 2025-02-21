@@ -1,18 +1,20 @@
 import pandas as pd
+import pytz
 from airflow.models.param import Param
 from airflow.decorators import dag, task
 from airflow.operators.empty import EmptyOperator
 import sqlalchemy as sa
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from pyspark.sql import SparkSession
+from datetime import datetime
 
 @dag(
     params = {
         "filename": Param("carmudi_data", description="masukkan nama file")
     },
-    # schedule_interval = "0 1 * * *",
-    # start_date        = datetime(2025, 1, 1, tzinfo=pytz.timezone("Asia/Jakarta")),
-    # catchup           = False,
+    schedule_interval = "0 1 * * *",
+    start_date        = datetime(2025, 1, 1, tzinfo=pytz.timezone("Asia/Jakarta")),
+    catchup           = False,
 )
 
 

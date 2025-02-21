@@ -11,6 +11,7 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 from pathlib import Path
 
 
+
 @dag(
     params = {
         "url": Param("https://www.carmudi.co.id/mobil-dijual/indonesia?type=used&page_number=", description="masukkan url"), # definisikan parameternya
@@ -46,7 +47,6 @@ def web_scraping():
         # for url in urls:
         for i in range(1, param3 + 1):
             url = f"{param1}{i}"  
-            # print(url)  # Cek apakah URL sudah benar
 
             # Request ke website
             response = requests.get(url, headers=headers)
@@ -144,8 +144,9 @@ def web_scraping():
                 # query = "SELECT count(*) jumlah_data FROM "+table_name
                 query = """
                 with cte_data as (
-                    select distinct judul, harga, tahun, merek, nama_mobil, kilometer, transmisi, lokasi, dealer, phone_number, link
+                    select distinct judul, harga, tahun, merek, nama_mobil, kilometer, transmisi, lokasi, dealer, phone_number, max(link) link
                     from carmudi_data_staging
+                    group by 1,2,3,4,5,6,7,8,9,10
                 )
                 
                 select * from cte_data a
