@@ -7,17 +7,20 @@ from airflow.models.param import Param
 from airflow.decorators import dag, task
 from airflow.operators.empty import EmptyOperator
 import sqlalchemy as sa
-# from sqlalchemy import create_engine
 from airflow.providers.postgres.hooks.postgres import PostgresHook
-import csv
+from pathlib import Path
 
 
 @dag(
     params = {
         "url": Param("https://www.carmudi.co.id/mobil-dijual/indonesia?type=used&page_number=", description="masukkan url"), # definisikan parameternya
         # "last_page":Param(1, type="integer", description="Mau scraping sampai halaman berapa?"),
-        "filename": Param("carmudi_data", description="masukkan nama file")
-    }
+        "filename": Param("carmudi_data", description="masukkan nama file"),
+        
+    },
+    # schedule_interval = "0 0 * * *",
+    # start_date        = datetime(2025, 1, 1, tzinfo=pytz.timezone("Asia/Jakarta")),
+    # catchup           = False,
 )
 
 
@@ -38,7 +41,7 @@ def web_scraping():
     mobil_list = []
 
     @task
-    def extract_web(param1, param2, param3):
+    def extract_web(param1, param3):
                 
         # for url in urls:
         for i in range(1, param3 + 1):
@@ -102,72 +105,70 @@ def web_scraping():
         # Simpan ke DataFrame
         df_data = pd.DataFrame(mobil_list)
         # print(df_data)
+
         return df_data
 
 
     @task
-    def extract_from_csv(param1):
-        filename = '/opt/airflow/data/'+param1+'.csv'
-        # Membaca data CSV
-        with open(filename, "r") as f:
-            reader = csv.DictReader(f)
-            data   = pd.DataFrame([row for row in reader])
-        return data
+    def load_datalake_stg(df, table_name):
+        # ========= postgres ==========
     
+        # DATABASE_URL = "postgresql://ajinusa:ajinusa@ajinusa-de8-postgres:5432/de8_final_project"
 
-    @task
-    def load_database(df, table_name):
-        
-        # ======== mysql =======
-        # DATABASE_URL = "mysql://root:ajinusa@ajinusa-mysql-container:3306/de8_final_project"
+        # Membuat engine untuk koneksi ke PostgreSQL
         # engine = sa.create_engine(DATABASE_URL)
-        engine = PostgresHook("ajinusa-mysql").get_sqlalchemy_engine()
-        # Cek koneksi
-        try:
-            with engine.connect() as connection:
-                print("Koneksi ke MySQL berhasil!")
+        engine = PostgresHook("de8_final_project").get_sqlalchemy_engine()
+
+        # Menyimpan DataFrame ke PostgreSQL (untuk tarikan pertama kali)
+        # df.to_sql("carmudi_data_staging", engine, if_exists='replace', index=False)
         
-            print(df)
-            df.to_sql(table_name, con=engine, if_exists='replace', index=False)
-            
-        except Exception as e:
-            print("Error koneksi:", e)
-
-    
-    def get_last_page(**context):
-        last_page = int(context["params"]["last_page"])  
-        return last_page
-
+        # Menyimpan DataFrame ke PostgreSQL (untuk tarikan terupdate halaman 1 dan 2)
+        df.to_sql("carmudi_data_staging", engine, if_exists='append', index=False)
+        
     
     @task
-    def read_mysql(table_name):
-        DATABASE_URL = "mysql+pymysql://root:ajinusa@ajinusa-mysql-container:3306/de8_final_project"
-
+    def load_datalake(table_name):
+        # DATABASE_URL = "mysql+pymysql://root:ajinusa@ajinusa-mysql-container:3306/de8_final_project"
         # Membuat engine untuk koneksi
         # engine = create_engine(DATABASE_URL)
-        engine = PostgresHook("ajinusa-mysql").get_sqlalchemy_engine()
+
+        engine = PostgresHook("de8_final_project").get_sqlalchemy_engine()
+      
         # Menjalankan query untuk mengambil data dari tabel
         try:
             # Koneksi dan query
             with engine.connect() as connection:
-                print("Koneksi ke MySQL berhasil!")
+                print("Koneksi ke Postgres berhasil!")
                 
-                # Misalnya kita ingin mengambil data dari tabel 'your_table_name'
-                query = "SELECT nama_mobil, AVG(CAST(harga AS DECIMAL(10, 2))) AS avg_harga FROM "+table_name+" group by 1 order by 2 desc limit 10"  # Ganti dengan nama tabel kamu
+          
+                # query = "SELECT count(*) jumlah_data FROM "+table_name
+                query = """
+                with cte_data as (
+                    select distinct judul, harga, tahun, merek, nama_mobil, kilometer, transmisi, lokasi, dealer, phone_number, link
+                    from carmudi_data_staging
+                )
                 
-                # Menjalankan query dan mengubahnya ke dalam DataFrame
-                df_read_mysql = pd.read_sql(query, connection)
-                print(df_read_mysql)
-                # Tampilkan DataFrame
-                # df.head()  # Mengambil beberapa baris pertama dari DataFrame untuk ditampilkan
+                select * from cte_data a
+                """
+
+                
+                df_read_datalake = pd.read_sql(query, connection)
+
+                jakarta_tz = pytz.timezone('Asia/Jakarta')
+                df_read_datalake['snapshot_dt'] = pd.to_datetime(datetime.now(jakarta_tz))
+                df_read_datalake['snapshot_dt'] = df_read_datalake['snapshot_dt'].dt.tz_convert('Asia/Jakarta').astype(str)
+
+                df_read_datalake.to_sql(table_name, engine, if_exists='replace', index=False)
+                
+                print(df_read_datalake)
 
         except Exception as e:
             print("Error koneksi:", e)
 
 
-    extract_web = extract_web(param1 = "{{ params['url'] }}", param2 = "{{ params['filename'] }}", param3 = 200)
-    load_database = load_database(df = extract_web,table_name = "{{ params['filename'] }}")
-    read_mysql = read_mysql(table_name = "{{ params['filename'] }}")
-    start_task >> extract_web >> load_database >> read_mysql >> end_task
+    extract_web = extract_web(param1 = "{{ params['url'] }}", param3 = 2)
+    load_datalake_stg = load_datalake_stg(df = extract_web,table_name = "carmudi_data_staging")
+    load_datalake = load_datalake(table_name = "{{ params['filename'] }}")
+    start_task >> extract_web >> load_datalake_stg >> load_datalake >> end_task
 
 web_scraping()
