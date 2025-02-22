@@ -19,9 +19,9 @@ from pathlib import Path
         "filename": Param("carmudi_data", description="masukkan nama file"),
         
     },
-    # schedule_interval = "0 0 * * *",
-    # start_date        = datetime(2025, 1, 1, tzinfo=pytz.timezone("Asia/Jakarta")),
-    # catchup           = False,
+    schedule_interval = "0 0 * * *",
+    start_date        = datetime(2025, 1, 1, tzinfo=pytz.timezone("Asia/Jakarta")),
+    catchup           = False,
 )
 
 
